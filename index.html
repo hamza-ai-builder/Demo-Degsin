@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockHive — Multi-Store Inventory Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#1A56DB;--brand-dark:#1239a6;--brand-light:#EEF2FF;
+  --bg:#F8F9FC;--surface:#FFFFFF;--surface2:#F3F4F6;--surface3:#E9EBF0;
+  --text1:#111827;--text2:#6B7280;--text3:#9CA3AF;
+  --border:#E5E7EB;--border2:#D1D5DB;
+  --green:#059669;--green-bg:#ECFDF5;--green-text:#065F46;
+  --red:#DC2626;--red-bg:#FEF2F2;--red-text:#991B1B;
+  --amber:#D97706;--amber-bg:#FEF3C7;--amber-text:#92400E;
+  --blue-bg:#EEF2FF;--blue-text:#1E40AF;
+  --sidebar-w:230px;--header-h:60px;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;background:var(--bg);color:var(--text1);height:100vh;overflow:hidden}
+
+/* TOPBAR */
+.topbar{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:fixed;top:0;left:0;right:0;z-index:50;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.logo{font-weight:700;font-size:16px;color:var(--brand);display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-icon{width:32px;height:32px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-icon i{color:#fff;font-size:16px}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:7px 12px;width:240px}
+.search-box input{border:none;background:transparent;outline:none;font-size:12px;color:var(--text1);width:100%;font-family:inherit}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.notif-btn{width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;background:var(--surface)}
+.notif-dot{width:8px;height:8px;background:#EF4444;border-radius:50%;position:absolute;top:6px;right:6px;border:1.5px solid #fff}
+.user-btn{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:var(--surface)}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;background:var(--brand);flex-shrink:0}
+.role-pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.pill-admin{background:var(--blue-bg);color:var(--brand)}
+.pill-staff{background:var(--green-bg);color:var(--green)}
+.switch-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);background:var(--surface);transition:.15s}
+.switch-btn:hover{background:var(--surface2);color:var(--text1)}
+
+/* LAYOUT */
+.layout{display:flex;padding-top:var(--header-h);height:100vh}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:16px 0}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* SIDEBAR NAV */
+.nav-group{padding:0 12px;margin-bottom:6px}
+.nav-section-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:12px;font-weight:500;transition:.15s;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text1)}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:600}
+.nav-item i{font-size:17px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:#FEE2E2;color:#DC2626;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:700}
+.nav-divider{height:1px;background:var(--border);margin:8px 12px}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:flex;flex-direction:column;gap:20px}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between}
+.page-title{font-size:18px;font-weight:700}
+.page-sub{font-size:12px;color:var(--text2);margin-top:3px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text1);transition:.15s;font-family:inherit}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn-primary:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:#FECACA}
+.btn-danger:hover{background:#FEE2E2}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-icon{padding:5px 8px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.stat-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.stat-icon i{font-size:18px}
+.ic-blue{background:#DBEAFE;color:#1D4ED8}
+.ic-green{background:#D1FAE5;color:var(--green)}
+.ic-amber{background:#FEF3C7;color:var(--amber)}
+.ic-red{background:#FEE2E2;color:var(--red)}
+.stat-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.stat-value{font-size:24px;font-weight:700;line-height:1}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:5px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:700}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ALERTS */
+.alert{border-radius:var(--radius);padding:12px 16px;display:flex;align-items:flex-start;gap:10px;font-size:12px}
+.alert-warning{background:#FFFBEB;border:1px solid #FCD34D;color:var(--amber-text)}
+.alert-danger{background:var(--red-bg);border:1px solid #FECACA;color:var(--red-text)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:var(--green-text)}
+.badge-red{background:var(--red-bg);color:var(--red-text)}
+.badge-amber{background:var(--amber-bg);color:var(--amber-text)}
+.badge-blue{background:var(--blue-bg);color:var(--blue-text)}
+.badge-gray{background:var(--surface2);color:var(--text2)}
+
+/* PRODUCT IMG */
+.prod-img{width:38px;height:38px;border-radius:var(--radius);background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+
+/* TAG */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.tag-blue{background:var(--blue-bg);color:var(--brand)}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-amber{background:var(--amber-bg);color:var(--amber)}
+
+/* PROGRESS */
+.prog{height:5px;border-radius:3px;background:var(--surface2);overflow:hidden;width:60px;display:inline-block;vertical-align:middle}
+.prog-fill{height:100%;border-radius:3px}
+
+/* CHART BARS */
+.chart-rows{display:flex;flex-direction:column;gap:10px;padding:16px 18px}
+.chart-row{display:flex;align-items:center;gap:10px}
+.chart-lbl{font-size:11px;color:var(--text2);width:80px;text-align:right;flex-shrink:0}
+.chart-track{flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.chart-fill{height:100%;border-radius:4px;transition:.4s}
+.chart-val{font-size:11px;font-weight:700;width:45px;text-align:right;flex-shrink:0}
+
+/* STORE CARD */
+.store-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;display:flex;flex-direction:column;gap:12px}
+.store-title{font-weight:700;font-size:13px}
+.store-meta{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px}
+.store-stats{display:flex;flex-direction:column;gap:5px}
+.store-stat-row{display:flex;justify-content:space-between;font-size:11px}
+.store-stat-key{color:var(--text2)}
+.store-stat-val{font-weight:600}
+
+/* FORMS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.form-input,.form-select{border:1px solid var(--border2);border-radius:var(--radius);padding:8px 11px;font-size:12px;background:var(--surface);color:var(--text1);outline:none;font-family:inherit;width:100%}
+.form-input:focus,.form-select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+textarea.form-input{resize:vertical;min-height:70px}
+
+/* UPLOAD ZONE */
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;color:var(--text2);font-size:12px}
+.upload-zone:hover{border-color:var(--brand);background:var(--blue-bg)}
+.upload-zone i{font-size:24px;display:block;margin-bottom:6px;color:var(--text3)}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:700}
+.modal-body{padding:22px;display:flex;flex-direction:column;gap:14px}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+
+/* TABS */
+.tab-bar{display:flex;gap:2px;background:var(--surface2);padding:3px;border-radius:var(--radius);width:fit-content}
+.tab{padding:6px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);transition:.15s;user-select:none}
+.tab.active{background:var(--surface);color:var(--text1);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+/* RADIO */
+.radio-group{display:flex;gap:14px}
+.radio-label{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer}
+
+/* RESPONSIVE TABLE ACTIONS */
+.action-group{display:flex;gap:6px}
+
+/* INVENTORY HIGHLIGHT */
+.row-danger td{background:#FFF5F5}
+.row-warning td{background:#FFFBEB}
+
+/* STAFF HIDDEN */
+.admin-only{transition:.2s}
+
+/* LOGIN PAGE */
+.login-page{display:none;align-items:center;justify-content:center;min-height:calc(100vh - var(--header-h));padding:40px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;width:400px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:28px}
+.login-logo-icon{width:44px;height:44px;background:var(--brand);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.login-logo-icon i{color:#fff;font-size:22px}
+.login-title{font-size:22px;font-weight:700}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="logo" href="#">
+    <div class="logo-icon"><i class="ti ti-building-store"></i></div>
+    StockHive
+  </a>
+  <div class="search-box">
+    <i class="ti ti-search" style="font-size:14px;color:var(--text3)"></i>
+    <input type="text" placeholder="Search products, SKU, stores…">
+  </div>
+  <div class="topbar-right">
+    <div class="notif-btn" title="Notifications">
+      <i class="ti ti-bell" style="font-size:18px;color:var(--text2)"></i>
+      <div class="notif-dot"></div>
+    </div>
+    <div class="user-btn" id="user-btn" onclick="toggleRole()">
+      <div class="avatar" id="av">AD</div>
+      <div>
+        <div style="font-size:12px;font-weight:600" id="uname">Adam Khan</div>
+        <span class="role-pill pill-admin" id="rpill">Admin</span>
+      </div>
+      <i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+    </div>
+    <div class="switch-btn" onclick="toggleRole()" title="Toggle between Admin and Staff view">
+      <i class="ti ti-switch-horizontal" style="font-size:14px"></i>
+      Switch Role
+    </div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-group">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="nav('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</div>
+      <div class="nav-item" onclick="nav('stores',this)"><i class="ti ti-building-store"></i>Stores</div>
+      <div class="nav-item" onclick="nav('products',this)"><i class="ti ti-package"></i>Products</div>
+      <div class="nav-item" onclick="nav('inventory',this)"><i class="ti ti-layers-intersect"></i>Inventory <span class="nav-badge">3</span></div>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-group admin-only" id="admin-nav">
+      <div class="nav-section-label">Analytics</div>
+      <div class="nav-item" onclick="nav('reports',this)"><i class="ti ti-chart-bar"></i>Reports</div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">Settings</div>
+      <div class="nav-item" onclick="nav('users',this)"><i class="ti ti-users"></i>User Management</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">Help</div>
+      <div class="nav-item"><i class="ti ti-help-circle"></i>Support</div>
+      <div class="nav-item" style="margin-top:4px;color:var(--red)" onclick="nav('login',this)"><i class="ti ti-logout"></i>Log Out</div>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content" id="main-content">
+
+    <!-- ═══════════════ DASHBOARD ═══════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Monday, 2 June 2026 — All Stores Overview</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn"><i class="ti ti-download"></i>Export</button>
+          <button class="btn btn-primary admin-only" onclick="openModal('addProduct')"><i class="ti ti-plus"></i>Add Product</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon ic-blue"><i class="ti ti-building-store"></i></div>
+          <div class="stat-label">Total Stores</div>
+          <div class="stat-value">4</div>
+          <div class="stat-sub">2 Karachi · 2 Lahore</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ic-green"><i class="ti ti-package"></i></div>
+          <div class="stat-label">Total Products</div>
+          <div class="stat-value">1,248</div>
+          <div class="stat-sub">↑ 24 added this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ic-amber"><i class="ti ti-layers-intersect"></i></div>
+          <div class="stat-label">Total Inventory</div>
+          <div class="stat-value">18,432</div>
+          <div class="stat-sub">Units across all stores</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ic-red"><i class="ti ti-alert-triangle"></i></div>
+          <div class="stat-label">Low Stock Alerts</div>
+          <div class="stat-value" style="color:var(--red)">3</div>
+          <div class="stat-sub">Requires attention</div>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0;margin-top:1px"></i>
+        <div><strong>3 products are running low on stock</strong> — iPhone 15 Case (4 left), USB-C Hub (2 left), Wireless Mouse (1 left). <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="nav('inventory',document.querySelector('[onclick*=inventory]'))">View inventory →</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Store Performance</div>
+            <span class="badge badge-blue">This Month</span>
+          </div>
+          <div class="chart-rows">
+            <div class="chart-row"><div class="chart-lbl">Karachi-1</div><div class="chart-track"><div class="chart-fill" style="width:84%;background:var(--brand)"></div></div><div class="chart-val" style="color:var(--brand)">4,821</div></div>
+            <div class="chart-row"><div class="chart-lbl">Karachi-2</div><div class="chart-track"><div class="chart-fill" style="width:60%;background:var(--brand)"></div></div><div class="chart-val" style="color:var(--brand)">3,402</div></div>
+            <div class="chart-row"><div class="chart-lbl">Lahore-1</div><div class="chart-track"><div class="chart-fill" style="width:72%;background:var(--green)"></div></div><div class="chart-val" style="color:var(--green)">4,210</div></div>
+            <div class="chart-row"><div class="chart-lbl">Lahore-2</div><div class="chart-track"><div class="chart-fill" style="width:45%;background:var(--green)"></div></div><div class="chart-val" style="color:var(--green)">2,640</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Recently Added Products</div>
+            <button class="btn btn-sm" onclick="nav('products',document.querySelector('[onclick*=products]'))">View all</button>
+          </div>
+          <table>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">📱</div><div><div style="font-weight:600">iPhone 15 Case</div><div style="font-size:11px;color:var(--text2)">SKU-0421</div></div></div></td><td><span class="badge badge-green">In Stock</span></td><td style="text-align:right;font-weight:700">48</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🖱️</div><div><div style="font-weight:600">Wireless Mouse</div><div style="font-size:11px;color:var(--text2)">SKU-0422</div></div></div></td><td><span class="badge badge-red">Low Stock</span></td><td style="text-align:right;font-weight:700;color:var(--red)">1</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">⌨️</div><div><div style="font-weight:600">Mechanical KB</div><div style="font-size:11px;color:var(--text2)">SKU-0423</div></div></div></td><td><span class="badge badge-green">In Stock</span></td><td style="text-align:right;font-weight:700">120</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🔌</div><div><div style="font-weight:600">USB-C Hub</div><div style="font-size:11px;color:var(--text2)">SKU-0424</div></div></div></td><td><span class="badge badge-amber">Low Stock</span></td><td style="text-align:right;font-weight:700;color:var(--amber)">2</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🖥️</div><div><div style="font-weight:600">4K Monitor 27"</div><div style="font-size:11px;color:var(--text2)">SKU-0425</div></div></div></td><td><span class="badge badge-green">In Stock</span></td><td style="text-align:right;font-weight:700">35</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ STORES ═══════════════ -->
+    <div class="page" id="page-stores">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Store Management</div>
+          <div class="page-sub">4 stores configured — 3 active, 1 inactive</div>
+        </div>
+        <button class="btn btn-primary admin-only" onclick="openModal('addStore')"><i class="ti ti-plus"></i>Add Store</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="store-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="store-title">Karachi Main Branch</div><div class="store-meta"><i class="ti ti-map-pin" style="font-size:13px"></i> Saddar, Karachi</div></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="store-stats">
+            <div class="store-stat-row"><span class="store-stat-key">Products</span><span class="store-stat-val">432</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Total Units</span><span class="store-stat-val">6,200</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Contact</span><span class="store-stat-val">+92-21-111-001</span></div>
+          </div>
+          <div class="btn-row admin-only"><button class="btn" style="flex:1"><i class="ti ti-edit"></i>Edit</button><button class="btn btn-danger"><i class="ti ti-trash"></i>Delete</button></div>
+        </div>
+        <div class="store-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="store-title">Karachi North</div><div class="store-meta"><i class="ti ti-map-pin" style="font-size:13px"></i> Gulshan, Karachi</div></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="store-stats">
+            <div class="store-stat-row"><span class="store-stat-key">Products</span><span class="store-stat-val">289</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Total Units</span><span class="store-stat-val">4,100</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Contact</span><span class="store-stat-val">+92-21-111-002</span></div>
+          </div>
+          <div class="btn-row admin-only"><button class="btn" style="flex:1"><i class="ti ti-edit"></i>Edit</button><button class="btn btn-danger"><i class="ti ti-trash"></i>Delete</button></div>
+        </div>
+        <div class="store-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="store-title">Lahore Central</div><div class="store-meta"><i class="ti ti-map-pin" style="font-size:13px"></i> Gulberg, Lahore</div></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="store-stats">
+            <div class="store-stat-row"><span class="store-stat-key">Products</span><span class="store-stat-val">380</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Total Units</span><span class="store-stat-val">5,800</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Contact</span><span class="store-stat-val">+92-42-111-001</span></div>
+          </div>
+          <div class="btn-row admin-only"><button class="btn" style="flex:1"><i class="ti ti-edit"></i>Edit</button><button class="btn btn-danger"><i class="ti ti-trash"></i>Delete</button></div>
+        </div>
+        <div class="store-card" style="opacity:.7">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="store-title">Lahore East</div><div class="store-meta"><i class="ti ti-map-pin" style="font-size:13px"></i> DHA, Lahore</div></div>
+            <span class="badge badge-gray">Inactive</span>
+          </div>
+          <div class="store-stats">
+            <div class="store-stat-row"><span class="store-stat-key">Products</span><span class="store-stat-val">147</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Total Units</span><span class="store-stat-val">2,332</span></div>
+            <div class="store-stat-row"><span class="store-stat-key">Contact</span><span class="store-stat-val">+92-42-111-002</span></div>
+          </div>
+          <div class="btn-row admin-only"><button class="btn" style="flex:1"><i class="ti ti-edit"></i>Edit</button><button class="btn btn-danger"><i class="ti ti-trash"></i>Delete</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ PRODUCTS ═══════════════ -->
+    <div class="page" id="page-products">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Products</div>
+          <div class="page-sub">1,248 products across all stores</div>
+        </div>
+        <div class="btn-row">
+          <select class="form-select" style="width:auto"><option>All Stores</option><option>Karachi Main</option><option>Karachi North</option><option>Lahore Central</option><option>Lahore East</option></select>
+          <select class="form-select" style="width:auto"><option>All Categories</option><option>Electronics</option><option>Accessories</option><option>Peripherals</option><option>Cables</option></select>
+          <button class="btn btn-primary admin-only" onclick="openModal('addProduct')"><i class="ti ti-plus"></i>Add Product</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="tab-bar">
+            <div class="tab active">All Products</div>
+            <div class="tab">In Stock</div>
+            <div class="tab">Low Stock</div>
+            <div class="tab">Out of Stock</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px">
+              <i class="ti ti-search" style="font-size:13px;color:var(--text3)"></i>
+              <input type="text" placeholder="Search products…" style="border:none;background:transparent;outline:none;font-size:12px;width:160px;font-family:inherit;color:var(--text1)">
+            </div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th><th>SKU</th><th>Category</th><th>Store</th>
+              <th>Sale Price</th><th class="admin-only" id="cost-col">Cost Price</th>
+              <th>Stock</th><th>Status</th><th class="admin-only">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">📱</div><div><div style="font-weight:600">iPhone 15 Case</div></div></div></td>
+              <td style="color:var(--text2);font-family:monospace;font-size:11px">SKU-0421</td>
+              <td><span class="tag tag-blue">Accessories</span></td>
+              <td style="font-size:11px;color:var(--text2)">Karachi Main</td>
+              <td style="font-weight:700">Rs 1,200</td>
+              <td class="admin-only" style="color:var(--green);font-weight:600">Rs 750</td>
+              <td><span style="font-weight:600">48</span> <div class="prog"><div class="prog-fill" style="width:80%;background:var(--green)"></div></div></td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td class="admin-only"><div class="action-group"><button class="btn btn-sm btn-icon" onclick="openModal('editProduct')"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🖱️</div><div><div style="font-weight:600">Wireless Mouse</div></div></div></td>
+              <td style="color:var(--text2);font-family:monospace;font-size:11px">SKU-0422</td>
+              <td><span class="tag tag-green">Peripherals</span></td>
+              <td style="font-size:11px;color:var(--text2)">Lahore Central</td>
+              <td style="font-weight:700">Rs 2,500</td>
+              <td class="admin-only" style="color:var(--red);font-weight:600">Rs 1,600</td>
+              <td><span style="font-weight:700;color:var(--red)">1</span> <div class="prog"><div class="prog-fill" style="width:5%;background:var(--red)"></div></div></td>
+              <td><span class="badge badge-red">Low Stock</span></td>
+              <td class="admin-only"><div class="action-group"><button class="btn btn-sm btn-icon" onclick="openModal('editProduct')"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">⌨️</div><div><div style="font-weight:600">Mechanical Keyboard</div></div></div></td>
+              <td style="color:var(--text2);font-family:monospace;font-size:11px">SKU-0423</td>
+              <td><span class="tag tag-green">Peripherals</span></td>
+              <td style="font-size:11px;color:var(--text2)">Karachi Main</td>
+              <td style="font-weight:700">Rs 8,999</td>
+              <td class="admin-only" style="color:var(--green);font-weight:600">Rs 5,200</td>
+              <td><span style="font-weight:600">120</span> <div class="prog"><div class="prog-fill" style="width:100%;background:var(--green)"></div></div></td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td class="admin-only"><div class="action-group"><button class="btn btn-sm btn-icon" onclick="openModal('editProduct')"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🔌</div><div><div style="font-weight:600">USB-C Hub (7-in-1)</div></div></div></td>
+              <td style="color:var(--text2);font-family:monospace;font-size:11px">SKU-0424</td>
+              <td><span class="tag tag-blue">Accessories</span></td>
+              <td style="font-size:11px;color:var(--text2)">Karachi North</td>
+              <td style="font-weight:700">Rs 3,200</td>
+              <td class="admin-only" style="color:var(--amber);font-weight:600">Rs 1,900</td>
+              <td><span style="font-weight:700;color:var(--amber)">2</span> <div class="prog"><div class="prog-fill" style="width:8%;background:var(--amber)"></div></div></td>
+              <td><span class="badge badge-amber">Low Stock</span></td>
+              <td class="admin-only"><div class="action-group"><button class="btn btn-sm btn-icon" onclick="openModal('editProduct')"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🖥️</div><div><div style="font-weight:600">4K Monitor 27"</div></div></div></td>
+              <td style="color:var(--text2);font-family:monospace;font-size:11px">SKU-0425</td>
+              <td><span class="tag tag-amber">Electronics</span></td>
+              <td style="font-size:11px;color:var(--text2)">Lahore Central</td>
+              <td style="font-weight:700">Rs 62,000</td>
+              <td class="admin-only" style="color:var(--green);font-weight:600">Rs 42,000</td>
+              <td><span style="font-weight:600">35</span> <div class="prog"><div class="prog-fill" style="width:60%;background:var(--green)"></div></div></td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td class="admin-only"><div class="action-group"><button class="btn btn-sm btn-icon" onclick="openModal('editProduct')"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="prod-img">🎧</div><div><div style="font-weight:600">Noise-Cancel Headphones</div></div></div></td>
+              <td style="color:var(--text2);font-family:monospace;font-size:11px">SKU-0426</td>
+              <td><span class="tag tag-amber">Electronics</span></td>
+              <td style="font-size:11px;color:var(--text2)">Lahore Central</td>
+              <td style="font-weight:700">Rs 18,500</td>
+              <td class="admin-only" style="color:var(--green);font-weight:600">Rs 11,000</td>
+              <td><span style="font-weight:600">28</span> <div class="prog"><div class="prog-fill" style="width:50%;background:var(--green)"></div></div></td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td class="admin-only"><div class="action-group"><button class="btn btn-sm btn-icon" onclick="openModal('editProduct')"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ INVENTORY ═══════════════ -->
+    <div class="page" id="page-inventory">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Inventory Management</div>
+          <div class="page-sub">Real-time stock levels across all stores</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn admin-only" onclick="openModal('transfer')"><i class="ti ti-arrows-exchange"></i>Transfer Stock</button>
+          <button class="btn btn-primary admin-only" onclick="openModal('adjust')"><i class="ti ti-adjustments"></i>Adjust Stock</button>
+        </div>
+      </div>
+      <div class="alert alert-danger">
+        <i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0;margin-top:1px"></i>
+        <div><strong>Critical alert:</strong> Wireless Mouse has only 1 unit remaining at Lahore Central. USB-C Hub has 2 units at Karachi North. Immediate restock required.</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Stock Levels by Store</div>
+          <select class="form-select" style="width:auto;font-size:11px"><option>All Products</option><option>Low Stock Only</option><option>Out of Stock</option></select>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Karachi Main</th><th>Karachi North</th><th>Lahore Central</th><th>Lahore East</th><th>Total</th><th class="admin-only">Action</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:600">iPhone 15 Case</td>
+              <td><span class="badge badge-green">20</span></td>
+              <td><span class="badge badge-green">15</span></td>
+              <td><span class="badge badge-green">8</span></td>
+              <td><span class="badge badge-green">5</span></td>
+              <td style="font-weight:700">48</td>
+              <td class="admin-only"><button class="btn btn-sm" onclick="openModal('adjust')"><i class="ti ti-adjustments"></i>Adjust</button></td>
+            </tr>
+            <tr class="row-danger">
+              <td style="font-weight:600;color:var(--red)"><i class="ti ti-alert-circle" style="font-size:13px;vertical-align:-1px"></i> Wireless Mouse</td>
+              <td><span class="badge badge-gray">—</span></td>
+              <td><span class="badge badge-gray">—</span></td>
+              <td><span class="badge badge-red">1</span></td>
+              <td><span class="badge badge-gray">—</span></td>
+              <td style="font-weight:700;color:var(--red)">1</td>
+              <td class="admin-only"><button class="btn btn-primary btn-sm" onclick="openModal('adjust')">Restock</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Mechanical Keyboard</td>
+              <td><span class="badge badge-green">60</span></td>
+              <td><span class="badge badge-green">30</span></td>
+              <td><span class="badge badge-green">20</span></td>
+              <td><span class="badge badge-green">10</span></td>
+              <td style="font-weight:700">120</td>
+              <td class="admin-only"><button class="btn btn-sm" onclick="openModal('adjust')"><i class="ti ti-adjustments"></i>Adjust</button></td>
+            </tr>
+            <tr class="row-warning">
+              <td style="font-weight:600;color:var(--amber)"><i class="ti ti-alert-circle" style="font-size:13px;vertical-align:-1px"></i> USB-C Hub</td>
+              <td><span class="badge badge-gray">—</span></td>
+              <td><span class="badge badge-amber">2</span></td>
+              <td><span class="badge badge-gray">—</span></td>
+              <td><span class="badge badge-gray">—</span></td>
+              <td style="font-weight:700;color:var(--amber)">2</td>
+              <td class="admin-only"><button class="btn btn-primary btn-sm" onclick="openModal('adjust')">Restock</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">4K Monitor 27"</td>
+              <td><span class="badge badge-green">12</span></td>
+              <td><span class="badge badge-green">8</span></td>
+              <td><span class="badge badge-green">15</span></td>
+              <td><span class="badge badge-gray">0</span></td>
+              <td style="font-weight:700">35</td>
+              <td class="admin-only"><button class="btn btn-sm" onclick="openModal('adjust')"><i class="ti ti-adjustments"></i>Adjust</button></td>
+            </tr>
+            <tr>
+              <td style="font-weight:600">Noise-Cancel Headphones</td>
+              <td><span class="badge badge-green">10</span></td>
+              <td><span class="badge badge-green">5</span></td>
+              <td><span class="badge badge-green">9</span></td>
+              <td><span class="badge badge-green">4</span></td>
+              <td style="font-weight:700">28</td>
+              <td class="admin-only"><button class="btn btn-sm" onclick="openModal('adjust')"><i class="ti ti-adjustments"></i>Adjust</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ REPORTS ═══════════════ -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Reports</div>
+          <div class="page-sub">Inventory analytics and export</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn"><i class="ti ti-file-type-pdf"></i>Export PDF</button>
+          <button class="btn btn-primary"><i class="ti ti-table-export"></i>Export Excel</button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Sale Value</div><div class="stat-value">Rs 2.4M</div><div class="stat-sub">All stores combined</div></div>
+        <div class="stat-card"><div class="stat-label">Total Cost Value</div><div class="stat-value" style="color:var(--brand)">Rs 1.5M</div><div class="stat-sub">Purchase cost total</div></div>
+        <div class="stat-card"><div class="stat-label">Gross Margin</div><div class="stat-value" style="color:var(--green)">36.8%</div><div class="stat-sub">Across all products</div></div>
+        <div class="stat-card"><div class="stat-label">Stock Turnover</div><div class="stat-value">4.2x</div><div class="stat-sub">Last 30 days</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Inventory Report by Store</div><span class="badge badge-blue">June 2026</span></div>
+          <table>
+            <thead><tr><th>Store</th><th>Products</th><th>Units</th><th>Sale Value</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:600">Karachi Main</td><td>432</td><td>6,200</td><td style="font-weight:700">Rs 820K</td></tr>
+              <tr><td style="font-weight:600">Karachi North</td><td>289</td><td>4,100</td><td style="font-weight:700">Rs 540K</td></tr>
+              <tr><td style="font-weight:600">Lahore Central</td><td>380</td><td>5,800</td><td style="font-weight:700">Rs 700K</td></tr>
+              <tr><td style="font-weight:600">Lahore East</td><td>147</td><td>2,332</td><td style="font-weight:700">Rs 340K</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Stock Distribution by Category</div></div>
+          <div class="chart-rows">
+            <div class="chart-row"><div class="chart-lbl">Electronics</div><div class="chart-track"><div class="chart-fill" style="width:72%;background:var(--brand)"></div></div><div class="chart-val">5,210</div></div>
+            <div class="chart-row"><div class="chart-lbl">Peripherals</div><div class="chart-track"><div class="chart-fill" style="width:55%;background:var(--green)"></div></div><div class="chart-val">3,940</div></div>
+            <div class="chart-row"><div class="chart-lbl">Accessories</div><div class="chart-track"><div class="chart-fill" style="width:40%;background:var(--amber)"></div></div><div class="chart-val">2,900</div></div>
+            <div class="chart-row"><div class="chart-lbl">Cables</div><div class="chart-track"><div class="chart-fill" style="width:28%;background:#7C3AED"></div></div><div class="chart-val">2,010</div></div>
+            <div class="chart-row"><div class="chart-lbl">Other</div><div class="chart-track"><div class="chart-fill" style="width:20%;background:var(--text3)"></div></div><div class="chart-val">1,440</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ USERS ═══════════════ -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <div>
+          <div class="page-title">User Management</div>
+          <div class="page-sub">Manage admin and staff accounts</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addUser')"><i class="ti ti-user-plus"></i>Add User</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>User</th><th>Role</th><th>Assigned Stores</th><th>Last Login</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:11px">AK</div><div><div style="font-weight:600">Adam Khan</div><div style="font-size:11px;color:var(--text2)">adam@company.com</div></div></div></td>
+              <td><span class="badge badge-blue">Admin</span></td>
+              <td style="font-size:11px">All Stores</td>
+              <td style="font-size:11px;color:var(--text2)">Today, 10:30 AM</td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td><div class="action-group"><button class="btn btn-sm btn-icon"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:11px;background:var(--green)">SA</div><div><div style="font-weight:600">Sara Ahmed</div><div style="font-size:11px;color:var(--text2)">sara@company.com</div></div></div></td>
+              <td><span class="badge badge-green">Staff</span></td>
+              <td style="font-size:11px">Karachi Main, North</td>
+              <td style="font-size:11px;color:var(--text2)">Today, 9:15 AM</td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td><div class="action-group"><button class="btn btn-sm btn-icon"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:11px;background:#7C3AED">MR</div><div><div style="font-weight:600">Mohsin Raza</div><div style="font-size:11px;color:var(--text2)">mohsin@company.com</div></div></div></td>
+              <td><span class="badge badge-green">Staff</span></td>
+              <td style="font-size:11px">Lahore Central</td>
+              <td style="font-size:11px;color:var(--text2)">Yesterday, 4:00 PM</td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td><div class="action-group"><button class="btn btn-sm btn-icon"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+            <tr style="opacity:.65">
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:11px;background:#6B7280">ZK</div><div><div style="font-weight:600">Zara Khan</div><div style="font-size:11px;color:var(--text2)">zara@company.com</div></div></div></td>
+              <td><span class="badge badge-green">Staff</span></td>
+              <td style="font-size:11px">Lahore East</td>
+              <td style="font-size:11px;color:var(--text2)">5 days ago</td>
+              <td><span class="badge badge-gray">Inactive</span></td>
+              <td><div class="action-group"><button class="btn btn-sm btn-icon"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger"><i class="ti ti-trash"></i></button></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+    <div class="page" id="page-login">
+      <div style="display:flex;align-items:center;justify-content:center;padding:40px 0">
+        <div class="login-box">
+          <div class="login-logo">
+            <div class="login-logo-icon"><i class="ti ti-building-store"></i></div>
+            <div><div class="login-title">StockHive</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Inventory Management System</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="form-group"><div class="form-label">Email Address</div><input class="form-input" type="email" placeholder="admin@company.com" value="adam@company.com"></div>
+            <div class="form-group"><div class="form-label">Password</div><input class="form-input" type="password" placeholder="••••••••" value="••••••••"></div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="nav('dashboard',null)"><i class="ti ti-login"></i>Log In as Admin</button>
+            </div>
+            <div style="text-align:center;font-size:11px;color:var(--text2)">— or —</div>
+            <button class="btn" style="justify-content:center;color:var(--green);border-color:var(--green)" onclick="toggleRole();nav('dashboard',null)"><i class="ti ti-user"></i>Log In as Staff</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<!-- MODAL CONTAINER -->
+<div id="modal-root"></div>
+
+<script>
+let isAdmin = true;
+
+function nav(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  if (el) el.classList.add('active');
+  else {
+    const match = document.querySelector('.nav-item[onclick*="' + page + '"]');
+    if (match) match.classList.add('active');
+  }
+}
+
+function toggleRole() {
+  isAdmin = !isAdmin;
+  const uname = document.getElementById('uname');
+  const rpill = document.getElementById('rpill');
+  const av = document.getElementById('av');
+  if (isAdmin) {
+    uname.textContent = 'Adam Khan';
+    rpill.textContent = 'Admin';
+    rpill.className = 'role-pill pill-admin';
+    av.textContent = 'AD';
+    av.style.background = 'var(--brand)';
+  } else {
+    uname.textContent = 'Sara Ahmed';
+    rpill.textContent = 'Staff';
+    rpill.className = 'role-pill pill-staff';
+    av.textContent = 'SA';
+    av.style.background = 'var(--green)';
+  }
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.visibility = isAdmin ? '' : 'hidden';
+    el.style.opacity = isAdmin ? '' : '0';
+    el.style.pointerEvents = isAdmin ? '' : 'none';
+  });
+  if (!isAdmin) {
+    const cur = document.querySelector('.page.active');
+    if (cur && (cur.id === 'page-reports' || cur.id === 'page-users')) {
+      nav('dashboard', null);
+    }
+  }
+}
+
+const modals = {
+  addProduct: `
+    <div class="modal-head"><div class="modal-title"><i class="ti ti-package"></i> Add New Product</div><button class="btn btn-sm btn-icon" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><div class="form-label">Product Title</div><input class="form-input" placeholder="e.g. iPhone 15 Case"></div><div class="form-group"><div class="form-label">SKU / Code</div><input class="form-input" placeholder="SKU-XXXX"></div></div>
+      <div class="form-group"><div class="form-label">Description</div><textarea class="form-input" placeholder="Product description…"></textarea></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Category</div><select class="form-select"><option>Electronics</option><option>Accessories</option><option>Peripherals</option></select></div><div class="form-group"><div class="form-label">Assign to Store</div><select class="form-select"><option>Karachi Main</option><option>Karachi North</option><option>Lahore Central</option><option>Lahore East</option></select></div></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Sale Price (Rs)</div><input class="form-input" type="number" placeholder="0"></div><div class="form-group"><div class="form-label">Cost Price (Rs)</div><input class="form-input" type="number" placeholder="0"></div></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Discount (%)</div><input class="form-input" type="number" placeholder="0"></div><div class="form-group"><div class="form-label">Initial Stock Qty</div><input class="form-input" type="number" placeholder="0"></div></div>
+      <div class="form-group"><div class="form-label">Product Status</div><select class="form-select"><option>Active</option><option>Inactive</option></select></div>
+      <div class="form-group"><div class="form-label">Product Images</div><div class="upload-zone"><i class="ti ti-cloud-upload"></i>Click to upload product images<br><span style="font-size:10px;color:var(--text3)">PNG, JPG up to 10MB each</span></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary"><i class="ti ti-check"></i>Save Product</button></div>`,
+
+  editProduct: `
+    <div class="modal-head"><div class="modal-title"><i class="ti ti-edit"></i> Edit Product</div><button class="btn btn-sm btn-icon" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><div class="form-label">Product Title</div><input class="form-input" value="Wireless Mouse"></div><div class="form-group"><div class="form-label">SKU / Code</div><input class="form-input" value="SKU-0422"></div></div>
+      <div class="form-group"><div class="form-label">Description</div><textarea class="form-input">Ergonomic wireless mouse with 2.4GHz connectivity and long battery life.</textarea></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Sale Price (Rs)</div><input class="form-input" type="number" value="2500"></div><div class="form-group"><div class="form-label">Cost Price (Rs)</div><input class="form-input" type="number" value="1600"></div></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Discount (%)</div><input class="form-input" type="number" value="10"></div><div class="form-group"><div class="form-label">Status</div><select class="form-select"><option>Active</option><option>Inactive</option></select></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-danger" onclick="closeModal()"><i class="ti ti-trash"></i>Delete</button><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary"><i class="ti ti-check"></i>Save Changes</button></div>`,
+
+  addStore: `
+    <div class="modal-head"><div class="modal-title"><i class="ti ti-building-store"></i> Add New Store</div><button class="btn btn-sm btn-icon" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><div class="form-label">Store Name</div><input class="form-input" placeholder="e.g. Islamabad Central Branch"></div>
+      <div class="form-group"><div class="form-label">Store Address</div><input class="form-input" placeholder="Full address including city"></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Contact Number</div><input class="form-input" placeholder="+92-XX-XXX-XXXX"></div><div class="form-group"><div class="form-label">Status</div><select class="form-select"><option>Active</option><option>Inactive</option></select></div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary"><i class="ti ti-check"></i>Create Store</button></div>`,
+
+  transfer: `
+    <div class="modal-head"><div class="modal-title"><i class="ti ti-arrows-exchange"></i> Transfer Stock</div><button class="btn btn-sm btn-icon" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-group"><div class="form-label">Select Product</div><select class="form-select"><option>iPhone 15 Case (Available: 48)</option><option>Mechanical Keyboard (Available: 120)</option><option>4K Monitor 27" (Available: 35)</option></select></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">From Store</div><select class="form-select"><option>Karachi Main (20 units)</option><option>Karachi North (15 units)</option><option>Lahore Central (8 units)</option></select></div><div class="form-group"><div class="form-label">To Store</div><select class="form-select"><option>Lahore Central</option><option>Lahore East</option><option>Karachi North</option></select></div></div>
+      <div class="form-group"><div class="form-label">Quantity to Transfer</div><input class="form-input" type="number" value="10"></div>
+      <div class="alert alert-warning"><i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i><div style="font-size:11px">Transfer will be recorded in inventory log with timestamp and user info.</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary"><i class="ti ti-arrows-exchange"></i>Confirm Transfer</button></div>`,
+
+  adjust: `
+    <div class="modal-head"><div class="modal-title"><i class="ti ti-adjustments"></i> Adjust Stock Level</div><button class="btn btn-sm btn-icon" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><div class="form-label">Product</div><select class="form-select"><option>Wireless Mouse</option><option>USB-C Hub</option><option>iPhone 15 Case</option></select></div><div class="form-group"><div class="form-label">Store</div><select class="form-select"><option>Lahore Central</option><option>Karachi Main</option><option>Karachi North</option></select></div></div>
+      <div class="form-group"><div class="form-label">Adjustment Type</div><div class="radio-group"><label class="radio-label"><input type="radio" name="adj" checked> <span style="color:var(--green);font-weight:600">↑ Increase Stock</span></label><label class="radio-label"><input type="radio" name="adj"> <span style="color:var(--red);font-weight:600">↓ Decrease Stock</span></label></div></div>
+      <div class="form-group"><div class="form-label">Quantity</div><input class="form-input" type="number" value="50"></div>
+      <div class="form-group"><div class="form-label">Reason / Notes</div><input class="form-input" placeholder="e.g. New stock received from supplier"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary"><i class="ti ti-check"></i>Apply Adjustment</button></div>`,
+
+  addUser: `
+    <div class="modal-head"><div class="modal-title"><i class="ti ti-user-plus"></i> Add New User</div><button class="btn btn-sm btn-icon" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><div class="form-label">Full Name</div><input class="form-input" placeholder="e.g. Ali Hassan"></div><div class="form-group"><div class="form-label">Role</div><select class="form-select"><option>Staff</option><option>Admin</option></select></div></div>
+      <div class="form-group"><div class="form-label">Email Address</div><input class="form-input" type="email" placeholder="user@company.com"></div>
+      <div class="form-row"><div class="form-group"><div class="form-label">Password</div><input class="form-input" type="password" placeholder="••••••••"></div><div class="form-group"><div class="form-label">Confirm Password</div><input class="form-input" type="password" placeholder="••••••••"></div></div>
+      <div class="form-group"><div class="form-label">Assigned Stores</div><select class="form-select" multiple style="height:80px"><option>Karachi Main</option><option>Karachi North</option><option>Lahore Central</option><option>Lahore East</option></select><div style="font-size:10px;color:var(--text2);margin-top:3px">Hold Ctrl/Cmd to select multiple stores</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary"><i class="ti ti-check"></i>Create User</button></div>`
+};
+
+function openModal(type) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal-backdrop" onclick="if(event.target.classList.contains('modal-backdrop'))closeModal()"><div class="modal">${modals[type]||''}</div></div>`;
+}
+
+function closeModal() {
+  document.getElementById('modal-root').innerHTML = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
